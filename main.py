@@ -1,3 +1,4 @@
+
 import os
 import re
 from collections import Counter
@@ -14,189 +15,210 @@ PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEXT_SOURCE = os.path.join(PROJECT_DIR, "sample.txt")
 
 
-def load_mission_text():
+
+
+def retrieve_source_content():
     try:
         with open(TEXT_SOURCE, "r", encoding="utf-8") as source:
             return source.read()
 
     except FileNotFoundError:
-        print("Text source not found. Check sample.txt.")
+        print("Source file is missing. Please check sample.txt.")
         return None
 
     except OSError as error:
-        print(f"Unable to read the text source: {error}")
+        print(f"Unable to access the source file: {error}")
         return None
 
 
-def calculate_text_intelligence(text):
-    tokens = re.findall(r"\b[\w']+\b", text.lower())
-    text_lines = text.splitlines()
-    character_total = len(text.replace("\r", "").replace("\n", ""))
 
-    frequency_map = Counter(tokens)
+
+def generate_text_metrics(content):
+    words = re.findall(r"\b[\w']+\b", content.lower())
+
+    lines = content.splitlines()
+
+    characters = len(content.replace("\r", "").replace("\n", ""))
+
+    keyword_counts = Counter(words)
 
     return {
-        "word_count": len(tokens),
-        "line_count": len(text_lines),
-        "character_count": character_total,
-        "word_frequency": frequency_map
+        "word_count": len(words),
+        "line_count": len(lines),
+        "character_count": characters,
+        "word_frequency": keyword_counts
     }
 
 
-def print_intelligence_report(report):
+
+
+def display_analysis_briefing(metrics):
     print("\n" + "=" * 50)
     print("       THE PROFESSOR'S INTELLIGENCE REPORT")
     print("=" * 50)
 
-    print(f"Total words      : {report['word_count']}")
-    print(f"Total lines      : {report['line_count']}")
-    print(f"Total characters : {report['character_count']}")
+    print(f"Total words      : {metrics['word_count']}")
+    print(f"Total lines      : {metrics['line_count']}")
+    print(f"Total characters : {metrics['character_count']}")
 
     print("\n--- TOP 3 MOST FREQUENT WORDS ---")
 
-    for word, count in report["word_frequency"].most_common(3):
+    for word, count in metrics["word_frequency"].most_common(3):
         print(f"{word:<20} : {count}")
 
     print("=" * 50)
 
 
-def run_text_analysis():
-    print("\nPreparing the text analysis...")
 
-    text = load_mission_text()
 
-    if text is None:
+def execute_document_analysis():
+    print("\nPreparing the document analysis...")
+
+    content = retrieve_source_content()
+
+    if content is None:
         return
 
-    report = calculate_text_intelligence(text)
-    print_intelligence_report(report)
+    metrics = generate_text_metrics(content)
 
-    source_name = os.path.basename(TEXT_SOURCE)
+    display_analysis_briefing(metrics)
+
+    file_label = os.path.basename(TEXT_SOURCE)
 
     print("\n--- DATABASE STORAGE ---")
 
-    if save_mission_report(source_name, report):
-        print("The intelligence report has been secured.")
+    if save_mission_report(file_label, metrics):
+        print("The analysis report has been successfully secured.")
     else:
-        print("Unable to save the report.")
+        print("The report could not be saved to the database.")
 
 
-def show_mission_archive():
-    archive = retrieve_mission_archive()
+
+def display_saved_reports():
+    reports = retrieve_mission_archive()
 
     print("\n" + "=" * 75)
     print("                    MISSION ARCHIVE")
     print("=" * 75)
 
-    if not archive:
-        print("No reports found, or the database is unavailable.")
+    if not reports:
+        print("No saved reports are available.")
         return
 
-    for record in archive:
-        print(f"\nReport ID       : {record['report_id']}")
-        print(f"File name       : {record['file_name']}")
-        print(f"Total words     : {record['total_words']}")
-        print(f"Total lines     : {record['total_lines']}")
-        print(f"Total characters: {record['total_characters']}")
-        print(f"Analyzed at     : {record['analyzed_at']}")
+    for report in reports:
+        print(f"\nReport ID       : {report['report_id']}")
+        print(f"File name       : {report['file_name']}")
+        print(f"Total words     : {report['total_words']}")
+        print(f"Total lines     : {report['total_lines']}")
+        print(f"Total characters: {report['total_characters']}")
+        print(f"Analyzed at     : {report['analyzed_at']}")
 
     print("\n" + "=" * 75)
 
 
-def choose_archive_report():
-    archive = retrieve_mission_archive()
 
-    if not archive:
-        print("\nNo saved reports found, or the database is unavailable.")
+
+def select_report_reference():
+    reports = retrieve_mission_archive()
+
+    if not reports:
+        print("\nNo saved reports are available.")
         return None
 
     print("\n--- AVAILABLE REPORTS ---")
 
-    for record in archive:
+    for report in reports:
         print(
-            f"ID: {record['report_id']} | "
-            f"File: {record['file_name']} | "
-            f"Words: {record['total_words']} | "
-            f"Date: {record['analyzed_at']}"
+            f"ID: {report['report_id']} | "
+            f"File: {report['file_name']} | "
+            f"Words: {report['total_words']} | "
+            f"Date: {report['analyzed_at']}"
         )
 
     try:
-        selected_id = int(input("\nEnter the report ID: "))
+        report_reference = int(input("\nEnter the report ID: ").strip())
 
     except ValueError:
-        print("Enter a valid numeric report ID.")
+        print("Invalid input. Please enter a numeric report ID.")
         return None
 
-    for record in archive:
-        if record["report_id"] == selected_id:
-            return selected_id
+    for report in reports:
+        if report["report_id"] == report_reference:
+            return report_reference
 
-    print("The selected report ID does not exist.")
+    print("The selected report ID was not found.")
     return None
 
 
-def investigate_word_frequency():
+
+
+def search_report_keyword():
     print("\n--- WORD FREQUENCY INVESTIGATION ---")
 
-    report_id = choose_archive_report()
+    report_reference = select_report_reference()
 
-    if report_id is None:
+    if report_reference is None:
         return
 
-    target_word = input("Enter the word to investigate: ").strip().lower()
+    keyword = input("Enter the word to investigate: ").strip().lower()
 
-    if not target_word:
-        print("Enter a word before searching.")
+    if not keyword:
+        print("Please enter a word to continue.")
         return
 
-    if not re.fullmatch(r"[\w']+", target_word):
+    if not re.fullmatch(r"[\w']+", keyword):
         print("Enter one valid word without spaces or punctuation.")
         return
 
-    frequency = investigate_saved_word(report_id, target_word)
+    occurrence = investigate_saved_word(report_reference, keyword)
 
-    if frequency is None:
-        print("The search could not be completed.")
-    elif frequency == 0:
-        print(f"'{target_word}' was not found in Report ID {report_id}.")
+    if occurrence is None:
+        print("Unable to complete the keyword search.")
+
+    elif occurrence == 0:
+        print(f"'{keyword}' was not found in Report ID {report_reference}.")
+
     else:
-        print(f"\nWord      : {target_word}")
-        print(f"Frequency : {frequency}")
-        print(f"Report ID : {report_id}")
+        print(f"\nWord      : {keyword}")
+        print(f"Frequency : {occurrence}")
+        print(f"Report ID : {report_reference}")
 
 
-def reveal_top_words():
+def display_keyword_leaderboard():
     print("\n--- WORD FREQUENCY RANKINGS ---")
 
-    report_id = choose_archive_report()
+    report_reference = select_report_reference()
 
-    if report_id is None:
+    if report_reference is None:
         return
 
-    rankings = retrieve_word_rankings(report_id)
+    rankings = retrieve_word_rankings(report_reference)
 
     if not rankings:
-        print("No frequency records found, or the database is unavailable.")
+        print("No word frequency records are available.")
         return
 
     try:
-        number_of_words = int(input("How many top words should be displayed? "))
+        display_limit = int(
+            input("How many top words should be displayed? ").strip()
+        )
 
-        if number_of_words <= 0:
+        if display_limit <= 0:
             print("Enter a number greater than zero.")
             return
 
     except ValueError:
-        print("Enter a valid whole number.")
+        print("Please enter a valid whole number.")
         return
 
-    print(f"\n--- TOP {number_of_words} WORDS IN REPORT {report_id} ---")
+    print(f"\n--- TOP {display_limit} WORDS IN REPORT {report_reference} ---")
 
-    for item in rankings[:number_of_words]:
-        print(f"{item['word']:<25} : {item['frequency']}")
+    for entry in rankings[:display_limit]:
+        print(f"{entry['word']:<25} : {entry['frequency']}")
 
 
-def print_control_room():
+
+def render_command_interface():
     print("\n" + "=" * 50)
     print("       THE PROFESSOR'S CONTROL ROOM")
     print("=" * 50)
@@ -208,23 +230,23 @@ def print_control_room():
     print("=" * 50)
 
 
-def launch_control_room():
+def start_professor_console():
     while True:
-        print_control_room()
+        render_command_interface()
 
         selection = input("Your choice, Professor: ").strip()
 
         if selection == "1":
-            run_text_analysis()
+            execute_document_analysis()
 
         elif selection == "2":
-            show_mission_archive()
+            display_saved_reports()
 
         elif selection == "3":
-            investigate_word_frequency()
+            search_report_keyword()
 
         elif selection == "4":
-            reveal_top_words()
+            display_keyword_leaderboard()
 
         elif selection == "5":
             print("\nThe mission is complete. Bella Ciao!")
@@ -235,4 +257,4 @@ def launch_control_room():
 
 
 if __name__ == "__main__":
-    launch_control_room()
+    start_professor_console()

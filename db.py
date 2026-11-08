@@ -1,9 +1,8 @@
 import os
 import mysql.connector
-from dotenv import load_dotenv
 from mysql.connector import Error
 
-load_dotenv()
+
 
 
 def connect_database():
@@ -11,19 +10,25 @@ def connect_database():
         password = os.getenv("MYSQL_PASSWORD")
 
         if not password:
-            print("MySQL password not found. Check your .env file.")
+            print("MySQL password is not configured.")
+            print("Check the MYSQL_PASSWORD variable in your .env file.")
             return None
 
-        return mysql.connector.connect(
+        connection = mysql.connector.connect(
             host="localhost",
             user="root",
             password=password,
-            database="money_heist_analyzer"
+            database="money_heist_analyzer",
+            charset="utf8mb4"
         )
+
+        return connection
 
     except Error as error:
         print(f"Database connection failed: {error}")
         return None
+
+
 
 
 def save_mission_report(file_name, results):
@@ -51,6 +56,7 @@ def save_mission_report(file_name, results):
         )
 
         cursor.execute(report_query, report_values)
+
         report_id = cursor.lastrowid
 
         frequency_query = """
@@ -68,7 +74,9 @@ def save_mission_report(file_name, results):
             cursor.executemany(frequency_query, frequency_values)
 
         connection.commit()
+
         print(f"Analysis saved successfully. Report ID: {report_id}")
+
         return True
 
     except Error as error:
@@ -83,6 +91,8 @@ def save_mission_report(file_name, results):
         connection.close()
 
 
+
+
 def retrieve_mission_archive():
     connection = connect_database()
 
@@ -95,13 +105,19 @@ def retrieve_mission_archive():
         cursor = connection.cursor(dictionary=True)
 
         query = """
-            SELECT report_id, file_name, total_words,
-                   total_lines, total_characters, analyzed_at
+            SELECT
+                report_id,
+                file_name,
+                total_words,
+                total_lines,
+                total_characters,
+                analyzed_at
             FROM analysis_reports
             ORDER BY report_id DESC
         """
 
         cursor.execute(query)
+
         return cursor.fetchall()
 
     except Error as error:
@@ -113,6 +129,8 @@ def retrieve_mission_archive():
             cursor.close()
 
         connection.close()
+
+
 
 
 def retrieve_word_rankings(report_id):
@@ -127,13 +145,16 @@ def retrieve_word_rankings(report_id):
         cursor = connection.cursor(dictionary=True)
 
         query = """
-            SELECT word, frequency
+            SELECT
+                word,
+                frequency
             FROM word_frequencies
             WHERE report_id = %s
             ORDER BY frequency DESC, word ASC
         """
 
         cursor.execute(query, (report_id,))
+
         return cursor.fetchall()
 
     except Error as error:
@@ -145,6 +166,8 @@ def retrieve_word_rankings(report_id):
             cursor.close()
 
         connection.close()
+
+
 
 
 def investigate_saved_word(report_id, word):
@@ -165,6 +188,7 @@ def investigate_saved_word(report_id, word):
         """
 
         cursor.execute(query, (report_id, word.lower()))
+
         result = cursor.fetchone()
 
         return result[0] if result else 0
@@ -180,8 +204,11 @@ def investigate_saved_word(report_id, word):
         connection.close()
 
 
+
+
 if __name__ == "__main__":
     connection = connect_database()
+    
 
     if connection and connection.is_connected():
         print("Database connection successful!")
